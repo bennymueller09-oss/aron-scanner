@@ -73,12 +73,15 @@ def monitor_fehler(typ, details=""):
 
 def monitor_ok():
     if not markt_offen(): return
-    if "letzter_ok_tag" not in st.session_state: st.session_state["letzter_ok_tag"] = ""
-    heute = datetime.now().strftime("%Y-%m-%d")
-    if st.session_state["letzter_ok_tag"] == heute: return
-    st.session_state["letzter_ok_tag"] = heute
+    import os
+    heute     = datetime.now().strftime("%Y-%m-%d")
+    flag_file = f"/tmp/aron_ok_{heute}.flag"
+    if os.path.exists(flag_file): return
+    try: open(flag_file, "w").close()
+    except Exception: pass
     send_telegram(
         f"✅ <b>ARON Scanner läuft</b>\n"
+        f"Erster Scan des Tages abgeschlossen.\n"
         f"340 Aktien werden überwacht.\n"
         f"🕐 {datetime.now().strftime('%H:%M:%S')}"
     )
@@ -396,7 +399,15 @@ def main():
     if vix:
         if vix >= 30:
             st.error(f"⛔ VIX {vix} — ARON wird ab VIX 30 nicht gehandelt!")
-            if auto_ref: time.sleep(60); st.rerun()
+            if auto_ref:
+        import os
+        try:
+            with open("/tmp/aron_keepalive.txt", "w") as f:
+                f.write(datetime.now().isoformat())
+        except Exception:
+            pass
+        time.sleep(90)
+        st.rerun()
             return
         elif vix >= 20:
             st.warning(f"⚡ VIX {vix} — Vorsicht! Ab 20 aufpassen.")
@@ -512,7 +523,15 @@ def main():
 | 6 | **CRV ≥ 1:1** | TP auf 38er RT, SL 1-2 Kerzen vom letzten Hoch/Tief entfernt |
         """)
 
-    if auto_ref: time.sleep(60); st.rerun()
+    if auto_ref:
+        import os
+        try:
+            with open("/tmp/aron_keepalive.txt", "w") as f:
+                f.write(datetime.now().isoformat())
+        except Exception:
+            pass
+        time.sleep(90)
+        st.rerun()
 
 if __name__ == "__main__":
     main()
