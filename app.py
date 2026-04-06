@@ -401,6 +401,7 @@ def main():
             st.error(f"⛔ VIX {vix} — ARON wird ab VIX 30 nicht gehandelt!")
             if auto_ref: time.sleep(90); st.rerun()
             return
+
         elif vix >= 20:
             st.warning(f"⚡ VIX {vix} — Vorsicht! Ab 20 aufpassen.")
         else:
