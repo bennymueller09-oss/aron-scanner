@@ -399,15 +399,7 @@ def main():
     if vix:
         if vix >= 30:
             st.error(f"⛔ VIX {vix} — ARON wird ab VIX 30 nicht gehandelt!")
-            if auto_ref:
-        import os
-        try:
-            with open("/tmp/aron_keepalive.txt", "w") as f:
-                f.write(datetime.now().isoformat())
-        except Exception:
-            pass
-        time.sleep(90)
-        st.rerun()
+            if auto_ref: time.sleep(90); st.rerun()
             return
         elif vix >= 20:
             st.warning(f"⚡ VIX {vix} — Vorsicht! Ab 20 aufpassen.")
