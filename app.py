@@ -6,6 +6,11 @@ import urllib.request
 import json
 import time
 from datetime import datetime
+import pytz
+
+_BERLIN = pytz.timezone("Europe/Berlin")
+def now_berlin():
+    return datetime.now(_BERLIN)
 
 st.set_page_config(
     page_title="ARON Scanner",
@@ -52,7 +57,7 @@ def send_telegram(text):
         return False
 
 def markt_offen():
-    now  = datetime.now()
+    now  = now_berlin()
     wday = now.weekday()
     if wday >= 5: return False
     t = now.hour * 60 + now.minute
@@ -63,7 +68,7 @@ def monitor_fehler(typ, details=""):
         st.session_state["gemeldete_fehler"] = set()
     if typ in st.session_state["gemeldete_fehler"]: return
     st.session_state["gemeldete_fehler"].add(typ)
-    now = datetime.now().strftime("%H:%M:%S")
+    now = now_berlin().strftime("%H:%M:%S")
     nachrichten = {
         "SCAN_ABSTURZ":    f"🔴 <b>ARON Scanner — Absturz</b>\n<code>{details}</code>\n🕐 {now}",
         "HOHE_FEHLERQUOTE":f"⚠️ <b>ARON Scanner — Hohe Fehlerquote</b>\n{details} Aktien nicht ladbar\n🕐 {now}",
@@ -74,7 +79,7 @@ def monitor_fehler(typ, details=""):
 def monitor_ok():
     if not markt_offen(): return
     import os
-    heute     = datetime.now().strftime("%Y-%m-%d")
+    heute     = now_berlin().strftime("%Y-%m-%d")
     flag_file = f"/tmp/aron_ok_{heute}.flag"
     if os.path.exists(flag_file): return
     try: open(flag_file, "w").close()
@@ -83,7 +88,7 @@ def monitor_ok():
         f"✅ <b>ARON Scanner läuft</b>\n"
         f"Erster Scan des Tages abgeschlossen.\n"
         f"340 Aktien werden überwacht.\n"
-        f"🕐 {datetime.now().strftime('%H:%M:%S')}"
+        f"🕐 {now_berlin().strftime('%H:%M:%S')}"
     )
 
 # ── Watchlist (340 Ticker — Nasdaq + S&P500, ohne BRK.B) ──────────────────────
@@ -366,7 +371,7 @@ def main():
         st.title("⚡ ARON Scanner")
         st.caption("Momentum + EMA9 Bruch + Folgekerze + VWAP + CRV | 1-Minuten-Chart | 340 Aktien")
     with col_h2:
-        st.metric("🕐 Uhrzeit", datetime.now().strftime("%H:%M:%S"))
+        st.metric("🕐 Uhrzeit", now_berlin().strftime("%H:%M:%S"))
 
     with st.sidebar:
         st.markdown("### ⚙️ Parameter")
@@ -427,7 +432,7 @@ def main():
             if tg_aktiv and r["status"] == "SETUP ✓" and ticker not in st.session_state["gemeldet"]:
                 st.session_state["gemeldet"].add(ticker)
                 neue_setups.append(ticker)
-                now_s = datetime.now().strftime("%H:%M:%S")
+                now_s = now_berlin().strftime("%H:%M:%S")
                 send_telegram(
                     f"⚡ <b>ARON SETUP ✅</b>\n"
                     f"<b>{ticker}</b> — alle 6 Kriterien erfüllt\n"
@@ -477,7 +482,7 @@ def main():
         st.success(f"🔔 Alert gesendet: {', '.join(neue_setups)}")
 
     df_all  = pd.DataFrame(rows)
-    scan_ts = datetime.now().strftime("%H:%M:%S")
+    scan_ts = now_berlin().strftime("%H:%M:%S")
 
     c1,c2,c3,c4,c5,c6 = st.columns(6)
     c1.metric("📊 Gescannt",     len(df_all))
@@ -520,7 +525,7 @@ def main():
         import os
         try:
             with open("/tmp/aron_keepalive.txt", "w") as f:
-                f.write(datetime.now().isoformat())
+                f.write(now_berlin().isoformat())
         except Exception:
             pass
         time.sleep(90)
